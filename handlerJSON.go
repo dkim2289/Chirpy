@@ -11,7 +11,7 @@ func handlerDecodeJSON(w http.ResponseWriter, r *http.Request) {
 		Body string `json:"body"`
 	}
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
@@ -24,7 +24,8 @@ func handlerDecodeJSON(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, "Chirp is too long")
 		return
 	}
-	respondWithJSON(w, 200, returnVals{Valid: true})
+	cleanedBody := handlerProfane(params.Body)
+	respondWithJSON(w, 200, returnVals{CleanedBody: cleanedBody})
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
