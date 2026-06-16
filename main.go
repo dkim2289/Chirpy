@@ -7,15 +7,24 @@ import (
 	"net/http"
 	"os"
 	"sync/atomic"
+	"time"
 
 	"github.com/dkim2289/Chirpy/internal/database"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
+}
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQueries      *database.Queries
+	platform       string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -36,13 +45,10 @@ func (cfg *apiConfig) handlerHits(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(html))
 }
 
-func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
-	cfg.fileserverHits.Store(0)
-}
-
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
@@ -54,6 +60,7 @@ func main() {
 
 	cfg := apiConfig{
 		dbQueries: dbQueries,
+		platform:  platform,
 	}
 
 	mux := http.NewServeMux()
@@ -66,6 +73,7 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", cfg.handlerReset)
 	mux.HandleFunc("GET /admin/metrics", cfg.handlerHits)
 	mux.HandleFunc("POST /api/validate_chirp", handlerDecodeJSON)
+	mux.HandleFunc("POST /api/users", cfg.handlerUser)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
