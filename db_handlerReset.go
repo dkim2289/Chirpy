@@ -7,10 +7,10 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 403, "Forbidden")
 		return
 	}
-	err := cfg.dbQueries.DeleteAllUsers(r.Context())
+	err := cfg.db.DeleteAllUsers(r.Context())
 	if err != nil {
 		respondWithError(w, 500, "Could not delete users")
 		return
 	}
-	respondWithJSON(w, 200, "Users Deleted")
+	respondWithJSON(w, http.StatusOK, "Users Deleted")
 }
