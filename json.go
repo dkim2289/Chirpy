@@ -6,28 +6,6 @@ import (
 	"net/http"
 )
 
-func handlerDecodeJSON(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Body string `json:"body"`
-	}
-	type returnVals struct {
-		CleanedBody string `json:"cleaned_body"`
-	}
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		respondWithError(w, 500, "Invalid JSON")
-		return
-	}
-	if len(params.Body) > 140 {
-		respondWithError(w, 400, "Chirp is too long")
-		return
-	}
-	cleanedBody := handlerProfane(params.Body)
-	respondWithJSON(w, 200, returnVals{CleanedBody: cleanedBody})
-}
-
 func respondWithError(w http.ResponseWriter, code int, msg string) {
 	type errorResponse struct {
 		Error string `json:"error"`
