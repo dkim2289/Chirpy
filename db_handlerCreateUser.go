@@ -33,7 +33,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 
 	hashedPassword, err := auth.HashPassword(params.Password)
 	if err != nil {
-		respondWithError(w, 500, "Could not hass password")
+		respondWithError(w, 500, "Could not hash password")
 		return
 	}
 
