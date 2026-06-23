@@ -1,26 +1,45 @@
 package main
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
 
-type polkaRequest struct {
-	event string `json:"event"`
-	data  struct {
-		user_id string `json:"user_id"`
-	} `json:"data"`
-}
+	"github.com/google/uuid"
+)
 
-func handlerPolka(w http.ResponseWriter, pr polkaRequest) {
-	if pr.event != "user.upgraded" {
-		respondWithError(w, 204, "user not upgraded")
-		return
+func (cfg *apiConfig) handlerPolka(w http.ResponseWriter, r *http.Request) {
+	type data struct {
+		UserID string `json:"user_id"`
+	}
+	type parameters struct {
+		Event string `json:"event"`
+		Data  data   `json:"data"`
 	}
 
-	err := db.UpgradeUser(pr.data.user_id)
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 500, err.Error())
+		respondWithError(w, 500, "invalid JSON")
 		return
 	}
 
-	respondWithJSON()
+	if params.Event != "user.upgraded" {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 
+	userID, err := uuid.Parse(params.Data.UserID)
+	if err != nil {
+		respondWithError(w, 400, "Invalid user ID")
+		return
+	}
+
+	err = cfg.db.UpdateUserIsChirpyRed(r.Context(), userID)
+	if err != nil {
+		respondWithError(w, 404, "User not found")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
