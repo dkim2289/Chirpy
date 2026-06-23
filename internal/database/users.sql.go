@@ -74,27 +74,12 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 	return i, err
 }
 
-const updateUserIsChirpyRed = `-- name: UpdateUserIsChirpyRed :one
-UPDATE users SET is_chirpy_red = $1, updated_at = NOW()
-WHERE id = $2
-RETURNING id, created_at, updated_at, email, hashed_password, is_chirpy_red
+const updateUserIsChirpyRed = `-- name: UpdateUserIsChirpyRed :exec
+UPDATE users SET is_chirpy_red = true, updated_at = NOW()
+WHERE id = $1
 `
 
-type UpdateUserIsChirpyRedParams struct {
-	IsChirpyRed bool
-	ID          uuid.UUID
-}
-
-func (q *Queries) UpdateUserIsChirpyRed(ctx context.Context, arg UpdateUserIsChirpyRedParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updateUserIsChirpyRed, arg.IsChirpyRed, arg.ID)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.Email,
-		&i.HashedPassword,
-		&i.IsChirpyRed,
-	)
-	return i, err
+func (q *Queries) UpdateUserIsChirpyRed(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateUserIsChirpyRed, id)
+	return err
 }

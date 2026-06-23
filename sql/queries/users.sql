@@ -22,7 +22,6 @@ WHERE id = $3
 RETURNING *;
 
 
--- name: UpdateUserIsChirpyRed :one
-UPDATE users SET is_chirpy_red = $1, updated_at = NOW()
-WHERE id = $2
-RETURNING *;
+-- name: UpdateUserIsChirpyRed :exec
+UPDATE users SET is_chirpy_red = true, updated_at = NOW()
+WHERE id = $1;
