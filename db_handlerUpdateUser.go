@@ -3,29 +3,32 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/dkim2289/Chirpy/internal/auth"
 	"github.com/dkim2289/Chirpy/internal/database"
-	"github.com/google/uuid"
 )
 
-type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
-}
-
-func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
+	tokenString, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "Unauthorized")
+		return
+	}
+
+	userID, err := auth.ValidateJWT(tokenString, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, 401, "Unauthorized")
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "Invalid JSON")
 		return
@@ -37,16 +40,17 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
+	user, err := cfg.db.UpdateUser(r.Context(), database.UpdateUserParams{
 		Email:          params.Email,
 		HashedPassword: hashedPassword,
+		ID:             userID,
 	})
 	if err != nil {
-		respondWithError(w, 500, "Could not create user")
+		respondWithError(w, 500, "Could not update user")
 		return
 	}
 
-	respondWithJSON(w, 201, User{
+	respondWithJSON(w, 200, User{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
