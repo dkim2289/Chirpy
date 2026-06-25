@@ -50,24 +50,19 @@ func main() {
 		cfg.middlewareMetricsInc(http.FileServer(http.Dir(filepathRoot))),
 	))
 
+	mux.HandleFunc("POST /api/users", cfg.handlerCreateUser)
+	mux.HandleFunc("PUT /api/users", cfg.handlerUpdateUser)
+	mux.HandleFunc("POST /api/login", cfg.handlerLogin)
+	mux.HandleFunc("POST /api/refresh", cfg.handlerRefresh)
+	mux.HandleFunc("POST /api/revoke", cfg.handlerRevoke)
 	mux.HandleFunc("POST /api/chirps", cfg.handlerCreateChirps)
 	mux.HandleFunc("GET /api/chirps", cfg.handlerGetChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.handlerGetChirp)
 	mux.HandleFunc("DELETE /api/chirps/{chirpID}", cfg.handlerlDeleteChirp)
-
-	mux.HandleFunc("POST /api/polka/webhooks", cfg.handlerPolka)
-
-	mux.HandleFunc("POST /api/users", cfg.handlerCreateUser)
-	mux.HandleFunc("PUT /api/users", cfg.handlerUpdateUser)
-
-	mux.HandleFunc("POST /api/login", cfg.handlerLogin)
-	mux.HandleFunc("POST /api/refresh", cfg.handlerRefresh)
-	mux.HandleFunc("POST /api/revoke", cfg.handlerRevoke)
-
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
-
-	mux.HandleFunc("POST /admin/reset", cfg.handlerReset)
+	mux.HandleFunc("POST /api/polka/webhooks", cfg.handlerPolka)
 	mux.HandleFunc("GET /admin/metrics", cfg.handlerHits)
+	mux.HandleFunc("POST /admin/reset", cfg.handlerReset)
 
 	srv := &http.Server{
 		Addr:    ":" + port,

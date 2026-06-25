@@ -49,7 +49,7 @@ A RESTful HTTP server written in Go, built as a Twitter-like microblogging API. 
 4. Run database migrations from `sql/schema`:
 ```sh
    cd sql/schema
-   goose postgres "postgres://your_user:@localhost:5432/chirpy" up
+   goose postgres "postgres://your_username:@localhost:5432/chirpy" up
    cd ../..
 ```
 
