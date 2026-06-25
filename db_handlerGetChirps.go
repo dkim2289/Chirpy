@@ -29,21 +29,50 @@ func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
-	dbChirps, err := cfg.db.GetChirps(r.Context())
-	if err != nil {
-		respondWithError(w, 500, "Failed to get chirps")
-		return
+	authorIDString := r.URL.Query().Get("author_id")
+
+	var chirps []Chirp
+
+	if authorIDString != "" {
+		authorID, err := uuid.Parse(authorIDString)
+		if err != nil {
+			respondWithError(w, 400, "Invalid author ID")
+			return
+		}
+		dbChirps, err := cfg.db.GetChirpsByAuthor(r.Context(), authorID)
+		if err != nil {
+			respondWithError(w, 500, "Could not get chirps")
+			return
+		}
+		for _, chirp := range dbChirps {
+			chirps = append(chirps, Chirp{
+				ID:        chirp.ID,
+				CreatedAt: chirp.CreatedAt,
+				UpdatedAt: chirp.UpdatedAt,
+				Body:      chirp.Body,
+				UserID:    chirp.UserID,
+			})
+		}
+	} else {
+		dbChirps, err := cfg.db.GetChirps(r.Context())
+		if err != nil {
+			respondWithError(w, 500, "Could not get chirps")
+			return
+		}
+		for _, chirp := range dbChirps {
+			chirps = append(chirps, Chirp{
+				ID:        chirp.ID,
+				CreatedAt: chirp.CreatedAt,
+				UpdatedAt: chirp.UpdatedAt,
+				Body:      chirp.Body,
+				UserID:    chirp.UserID,
+			})
+		}
 	}
 
-	chirps := []Chirp{}
-	for _, dbChirp := range dbChirps {
-		chirps = append(chirps, Chirp{
-			ID:        dbChirp.ID,
-			CreatedAt: dbChirp.CreatedAt,
-			UpdatedAt: dbChirp.UpdatedAt,
-			Body:      dbChirp.Body,
-			UserID:    dbChirp.UserID,
-		})
+	if chirps == nil {
+		chirps = []Chirp{}
 	}
+
 	respondWithJSON(w, http.StatusOK, chirps)
 }
